@@ -162,7 +162,7 @@
                     <!-- Vehicle Speed -->
                     <div class="space-y-2">
                         <div class="flex justify-between text-sm">
-                            <label class="text-slate-300 font-medium">Truck Speed ($v$)</label>
+                            <label class="text-slate-300 font-medium">Truck Speed (<i>v</i>)</label>
                             <span class="font-mono text-emerald-400 font-bold" id="val-truck">50 m/s</span>
                         </div>
                         <input type="range" id="slider-truck" min="0" max="95" value="50" oninput="updateParams()">
@@ -171,7 +171,7 @@
                     <!-- Projectile Speed (Football only) -->
                     <div class="space-y-2" id="control-projectile">
                         <div class="flex justify-between text-sm">
-                            <label class="text-slate-300 font-medium">Throw Speed ($u$)</label>
+                            <label class="text-slate-300 font-medium">Throw Speed (<i>u</i>)</label>
                             <span class="font-mono text-cyan-400 font-bold" id="val-throw">30 m/s</span>
                         </div>
                         <input type="range" id="slider-throw" min="-50" max="100" value="30" oninput="updateParams()">
@@ -683,7 +683,7 @@
                     document.getElementById('takeaway-text').innerHTML = `
                         <span class="text-amber-400">Look at the tick counts!</span> 
                         The moving clock (top) has a longer diagonal path. Since light speed is constant, it takes longer to bounce. 
-                        <strong>Time Dilation factor ($\gamma$): ${gamma.toFixed(2)}x</strong>
+                        <strong>Time Dilation factor (&gamma;): ${gamma.toFixed(2)}x</strong>
                     `;
 
                 } else {
@@ -715,7 +715,7 @@
                     document.getElementById('takeaway-text').innerHTML = `
                         In the ground frame (top), the truck is chasing the light. 
                         In the passenger frame (bottom), light expands perfectly symmetrically from the truck. 
-                        Both measure speed exactly $c$.
+                        Both measure speed exactly <i>c</i>.
                     `;
                 }
             }
