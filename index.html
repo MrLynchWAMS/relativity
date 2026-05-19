@@ -3,1478 +3,746 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Relativity Sandbox: Footballs, Sound, & Light</title>
-    <!-- Tailwind CSS -->
+    <title>Relativity Sandbox</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons (via CDN) -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
         
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0b0f19;
-            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc;
         }
-        
+
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* Glassmorphism Styles */
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.7);
+        /* Clean Glass Panels */
+        .panel {
+            background: rgba(30, 41, 59, 0.6);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
         }
 
-        .glass-panel-active {
-            background: rgba(30, 41, 59, 0.85);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
         }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.5);
-            border-radius: 4px;
+        input[type=range]:focus {
+            outline: none;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.8);
-        }
-
-        /* Speed Comparison Bar animations */
-        .speed-bar {
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        canvas {
+            display: block;
+            width: 100%;
+            border-radius: 0.5rem;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col overflow-x-hidden pb-10">
+<body class="min-h-screen flex flex-col pb-8">
 
-    <!-- Header & Regime Switcher -->
-    <header class="w-full border-b border-gray-800 bg-gray-950/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
+    <header class="w-full border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
-                    <i data-lucide="orbit" class="w-6 h-6"></i>
+                <div class="p-2 bg-indigo-500/20 text-indigo-400 rounded-lg">
+                    <i data-lucide="microscope" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                        The Relativity Sandbox <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 font-mono font-normal border border-indigo-500/20">V1.7 (Split-Frame)</span>
-                    </h1>
-                    <p class="text-xs text-gray-400">Compare frames side-by-side to see why time and space must distort</p>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Relativity Lab</h1>
+                    <p class="text-xs text-slate-400">Interactive Reference Frame Visualizer</p>
                 </div>
             </div>
 
-            <!-- Regime Navigation Tabs -->
-            <div class="flex p-1 bg-gray-900 rounded-xl border border-gray-800 w-full md:w-auto">
-                <button id="btn-mode-football" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-md shadow-indigo-500/10" onclick="setMode('football')">
-                    <i data-lucide="circle-dot" class="w-4 h-4"></i>
-                    1. Footballs
+            <!-- Tabbed Navigation -->
+            <div class="flex p-1 bg-slate-800 rounded-xl border border-slate-700 w-full md:w-auto">
+                <button id="tab-football" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-lg shadow-indigo-900/50" onclick="setMode('football')">
+                    <i data-lucide="circle-dot" class="w-4 h-4"></i> 1. Classical
                 </button>
-                <button id="btn-mode-sound" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-gray-400 hover:text-white" onclick="setMode('sound')">
-                    <i data-lucide="waves" class="w-4 h-4"></i>
-                    2. Sound Waves
+                <button id="tab-sound" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-slate-400 hover:text-white" onclick="setMode('sound')">
+                    <i data-lucide="waves" class="w-4 h-4"></i> 2. Mediums (Sound)
                 </button>
-                <button id="btn-mode-light" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-gray-400 hover:text-white" onclick="setMode('light')">
-                    <i data-lucide="zap" class="w-4 h-4"></i>
-                    3. Light Speed
+                <button id="tab-light" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-slate-400 hover:text-white" onclick="setMode('light')">
+                    <i data-lucide="zap" class="w-4 h-4"></i> 3. Relativity (Light)
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        <!-- Left 8 Columns: Simulation & Graphics -->
-        <div class="lg:col-span-8 flex flex-col gap-6">
+        <!-- LEFT COLUMN: Canvas & Visuals -->
+        <div class="lg:col-span-8 flex flex-col gap-4">
             
-            <!-- Top Alert / Current Challenge Prompt -->
-            <div id="challenge-banner" class="glass-panel rounded-xl p-4 flex items-start gap-3 border-l-4 border-l-indigo-500">
-                <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 shrink-0">
-                    <i data-lucide="info" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm font-semibold text-white" id="challenge-title">Regime 1: Galileo's Playground (Classical Addition)</h3>
-                    <p class="text-xs text-gray-400 mt-0.5" id="challenge-desc">Observe how throwing an object from a moving truck adds velocities directly. Adjust truck speed and throw direction!</p>
-                </div>
-            </div>
-
-            <!-- Side-by-Side Dual Frame Main Viewport Canvas Box -->
-            <div class="glass-panel rounded-2xl overflow-hidden relative">
-                
-                <!-- Viewport Header -->
-                <div class="bg-gray-950/90 px-4 py-3 flex items-center justify-between border-b border-gray-800 gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                        <span class="text-xs font-mono tracking-wider uppercase text-indigo-400 font-bold">Dual Reference Frames (Side-by-Side Analysis)</span>
-                    </div>
-                </div>
-
-                <!-- Main Dual Frame Canvas Container -->
-                <div class="relative w-full aspect-[1.1/1] bg-slate-950 flex flex-col divide-y divide-gray-800">
-                    
-                    <!-- Top Frame: Ground Observer -->
-                    <div class="relative flex-1 bg-slate-950">
-                        <div class="absolute top-2 left-2 px-2.5 py-1 bg-indigo-900/60 border border-indigo-500/30 rounded text-[11px] font-bold text-indigo-200 uppercase tracking-wider z-20 flex items-center gap-1">
-                            <i data-lucide="footprints" class="w-3.5 h-3.5"></i> Ground Reference Frame (Rulers & Clocks Stationary)
-                        </div>
-                        <canvas id="groundCanvas" class="w-full h-full block"></canvas>
-                    </div>
-
-                    <!-- Bottom Frame: Passenger Observer -->
-                    <div class="relative flex-1 bg-slate-950">
-                        <div class="absolute top-2 left-2 px-2.5 py-1 bg-emerald-900/60 border border-emerald-500/30 rounded text-[11px] font-bold text-emerald-200 uppercase tracking-wider z-20 flex items-center gap-1">
-                            <i data-lucide="user" class="w-3.5 h-3.5"></i> Passenger Reference Frame (Vehicle Centered & Stationary)
-                        </div>
-                        <canvas id="passengerCanvas" class="w-full h-full block"></canvas>
-                    </div>
-
-                    <!-- Interactive Prediction overlay (Pauses sim upon entering Light mode) -->
-                    <div id="prediction-gate" class="absolute inset-0 bg-slate-950/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-300 hidden">
-                        <div class="max-w-xl bg-gray-900 border border-violet-500/50 rounded-2xl p-8 shadow-2xl relative">
-                            <div class="w-14 h-14 rounded-full bg-violet-500/10 text-violet-400 flex items-center justify-center mx-auto mb-4 border border-violet-500/30">
-                                <i data-lucide="help-circle" class="w-8 h-8"></i>
-                            </div>
-                            <h3 class="text-lg font-bold text-white mb-2" id="prediction-question">The Relativity Paradox</h3>
-                            <p class="text-xs text-gray-300 mb-6 leading-relaxed" id="prediction-context">
-                                To the Ground Observer, the vehicle is chasing the light pulse closely from behind. How can the Passenger inside still measure that exact same light pulse pulling away from them at full speed c?
-                            </p>
-                            
-                            <div class="space-y-3 text-left" id="prediction-options">
-                                <!-- Generated Dynamically -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Freeze Wave Notification Indicator -->
-                    <div id="freeze-indicator" class="absolute top-4 right-4 bg-amber-500/20 border border-amber-500/40 text-amber-300 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 pointer-events-none opacity-0 transition-opacity duration-300 z-20">
-                        <i data-lucide="snowflake" class="w-4 h-4 animate-spin"></i>
-                        <span>Wavefronts Frozen! Zoom in to inspect the compression gap</span>
-                    </div>
-                </div>
-
-                <!-- Visual Speed Comparator Panel -->
-                <div class="border-t border-gray-800 bg-gray-950/90 p-4 font-sans">
-                    <div class="flex items-center gap-2 mb-3">
-                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-400"></i>
-                        <span class="text-xs font-bold uppercase tracking-wider text-gray-300">Observation Dashboard: Speed Comparison of the projectile/pulse</span>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <!-- Passenger View Measured Speed Bar -->
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-emerald-400 font-semibold flex items-center gap-1">
-                                    <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                                    Speed Measured by Passenger
-                                </span>
-                                <span id="bar-passenger-label" class="font-mono font-bold text-white">0 m/s</span>
-                            </div>
-                            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800">
-                                <div id="bar-passenger-speed" class="bg-emerald-500 h-full speed-bar" style="width: 0%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Ground View Measured Speed Bar -->
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-indigo-400 font-semibold flex items-center gap-1">
-                                    <i data-lucide="footprints" class="w-3.5 h-3.5"></i>
-                                    Speed Measured by Ground Observer
-                                </span>
-                                <span id="bar-ground-label" class="font-mono font-bold text-white">0 m/s</span>
-                            </div>
-                            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800">
-                                <div id="bar-ground-speed" class="bg-indigo-500 h-full speed-bar" style="width: 0%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Conceptual Comparison Matrix (Physics Rules) -->
-            <div class="glass-panel rounded-xl p-5 border-t-2 border-indigo-500">
-                <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="grid" class="w-4 h-4 text-indigo-400"></i>
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">Physics Rule Indicator</h3>
-                </div>
-                <div class="grid grid-cols-3 gap-3 text-xs">
-                    
-                    <div id="matrix-football" class="p-3 bg-gray-950/50 rounded-xl border border-gray-800 transition-all duration-300">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <span class="font-bold text-gray-300 flex items-center gap-1">
-                                <span class="w-2 h-2 rounded-full bg-amber-400"></span> 1. Footballs
-                            </span>
-                            <span class="text-[10px] text-indigo-400 font-mono">Galilean</span>
-                        </div>
-                        <p class="text-[11px] text-gray-400 mb-1">Velocities add together: v_ground = v_vehicle + v_throw</p>
-                        <div class="p-1.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-center text-amber-300 font-bold" id="matrix-football-state">
-                            Speed is Relative, Time is Absolute
-                        </div>
-                    </div>
-
-                    <div id="matrix-sound" class="p-3 bg-gray-950/50 rounded-xl border border-gray-800 transition-all duration-300">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <span class="font-bold text-gray-300 flex items-center gap-1">
-                                <span class="w-2 h-2 rounded-full bg-blue-400"></span> 2. Sound
-                            </span>
-                            <span class="text-[10px] text-indigo-400 font-mono">Doppler</span>
-                        </div>
-                        <p class="text-[11px] text-gray-400 mb-1">Speed is locked to the air medium. Motion shifts wavelength & frequency.</p>
-                        <div class="p-1.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-center text-blue-300 font-bold" id="matrix-sound-state">
-                            Medium Sets Speed Limit
-                        </div>
-                    </div>
-
-                    <div id="matrix-light" class="p-3 bg-gray-950/50 rounded-xl border border-gray-800 transition-all duration-300">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <span class="font-bold text-gray-300 flex items-center gap-1">
-                                <span class="w-2 h-2 rounded-full bg-violet-400"></span> 3. Light
-                            </span>
-                            <span class="text-[10px] text-indigo-400 font-mono">Einstein</span>
-                        </div>
-                        <p class="text-[11px] text-gray-400 mb-1">Speed c is constant for all. Distance & Time adjust to keep it so.</p>
-                        <div class="p-1.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-center text-violet-300 font-bold" id="matrix-light-state">
-                            Speed is Absolute, Time is Relative
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Right 4 Columns: Controls -->
-        <div class="lg:col-span-4 flex flex-col gap-6">
-            
-            <!-- Quick Mode Setup Details / Explainer -->
-            <div id="quick-explainer" class="glass-panel rounded-xl p-5 border border-indigo-500/15">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-300">Learning Objective</h3>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/10 text-indigo-400" id="explainer-badge">Classical Mode</span>
-                </div>
-                <p class="text-xs text-gray-300 leading-relaxed" id="explainer-text">
-                    Observe how velocities combine relative to both platforms. Toggle the Vector arrows or Slow Motion to analyze standard Newtonian vectors perfectly.
+            <!-- Context Header -->
+            <div class="panel rounded-xl p-5 border-l-4 border-l-indigo-500 flex flex-col gap-2">
+                <h2 id="lesson-title" class="text-lg font-bold text-white">Part 1: Galilean Relativity (Footballs)</h2>
+                <p id="lesson-desc" class="text-sm text-slate-300 leading-relaxed">
+                    Observe how velocities add together. When the passenger throws a ball, its speed relative to the ground is the truck's speed PLUS the throw speed.
                 </p>
             </div>
 
-            <!-- Primary Simulation Controls -->
-            <div class="glass-panel rounded-xl p-5 flex flex-col gap-5">
-                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i>
-                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Engine Controls</h3>
+            <!-- Simulation Viewports -->
+            <div class="panel rounded-2xl p-2 flex flex-col gap-2">
+                
+                <!-- Ground Frame Canvas -->
+                <div class="relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                    <div class="absolute top-3 left-3 px-3 py-1.5 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg flex items-center gap-2 z-10">
+                        <i data-lucide="footprints" class="w-4 h-4 text-emerald-400"></i>
+                        <span class="text-xs font-bold text-slate-200">Frame 1: Ground Observer</span>
                     </div>
-                    <button class="text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 font-semibold" onclick="resetSim()">
-                        <i data-lucide="rotate-ccw" class="w-3 h-3"></i> RESET SIMULATION
+                    <div id="ground-metrics" class="absolute top-3 right-3 px-3 py-1.5 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg flex flex-col items-end z-10 text-xs font-mono text-slate-300">
+                        <!-- Populated by JS -->
+                    </div>
+                    <canvas id="canvas-ground" height="200"></canvas>
+                </div>
+
+                <!-- Passenger Frame Canvas -->
+                <div class="relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                    <div class="absolute top-3 left-3 px-3 py-1.5 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg flex items-center gap-2 z-10">
+                        <i data-lucide="user" class="w-4 h-4 text-cyan-400"></i>
+                        <span class="text-xs font-bold text-slate-200">Frame 2: Passenger Observer</span>
+                    </div>
+                    <div id="passenger-metrics" class="absolute top-3 right-3 px-3 py-1.5 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-lg flex flex-col items-end z-10 text-xs font-mono text-slate-300">
+                        <!-- Populated by JS -->
+                    </div>
+                    <canvas id="canvas-passenger" height="200"></canvas>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Controls -->
+        <div class="lg:col-span-4 flex flex-col gap-4">
+            
+            <div class="panel rounded-xl p-5 flex flex-col gap-6">
+                <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                    <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="settings-2" class="w-4 h-4 text-indigo-400"></i> Sim Controls
+                    </h3>
+                    <div class="font-mono text-xs text-indigo-300 bg-indigo-900/30 px-2 py-1 rounded border border-indigo-700/50" id="time-readout">
+                        T = 0.0s
+                    </div>
+                </div>
+
+                <!-- Playback Buttons -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btn-play" class="py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all" onclick="togglePlay()">
+                        <i data-lucide="pause" class="w-4 h-4" id="icon-play"></i>
+                        <span id="text-play">Pause</span>
+                    </button>
+                    <button class="py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all" onclick="resetSim()">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Restart
                     </button>
                 </div>
 
-                <!-- Simulation Action Buttons -->
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-play-pause" class="py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/10" onclick="togglePlay()">
-                        <i data-lucide="pause" class="w-4 h-4" id="play-icon"></i>
-                        <span id="play-text">Pause Sim</span>
-                    </button>
-                    <button id="btn-slowmo" class="py-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all" onclick="toggleSlowMo()">
-                        <i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i>
-                        <span id="slowmo-text">Slow Mo (0.2x)</span>
-                    </button>
-                </div>
-
-                <!-- Mode Specific Specialized buttons -->
-                <div id="mode-specific-buttons" class="space-y-2"></div>
-
-                <!-- Slider 1: Vehicle Speed -->
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between text-xs">
-                        <label class="text-gray-400 font-semibold flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                            Vehicle Speed (v)
-                        </label>
-                        <span class="font-mono text-indigo-300 font-bold" id="vehicle-speed-readout">v = 40 m/s</span>
+                <!-- Sliders -->
+                <div class="space-y-5">
+                    <!-- Vehicle Speed -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <label class="text-slate-300 font-medium">Truck Speed ($v$)</label>
+                            <span class="font-mono text-emerald-400 font-bold" id="val-truck">50 m/s</span>
+                        </div>
+                        <input type="range" id="slider-truck" min="0" max="95" value="50" oninput="updateParams()">
                     </div>
-                    <input type="range" id="slider-vehicle" min="0" max="100" value="40" class="w-full" oninput="updateSliders()">
-                    <div class="flex justify-between text-[9px] text-gray-500 font-mono">
-                        <span>0 (Stationary)</span>
-                        <span id="slider-vehicle-max-label">100 m/s</span>
+
+                    <!-- Projectile Speed (Football only) -->
+                    <div class="space-y-2" id="control-projectile">
+                        <div class="flex justify-between text-sm">
+                            <label class="text-slate-300 font-medium">Throw Speed ($u$)</label>
+                            <span class="font-mono text-cyan-400 font-bold" id="val-throw">30 m/s</span>
+                        </div>
+                        <input type="range" id="slider-throw" min="-50" max="100" value="30" oninput="updateParams()">
                     </div>
                 </div>
 
-                <!-- Slider 2: Action Velocity -->
-                <div class="space-y-2" id="slider-action-box">
-                    <div class="flex items-center justify-between text-xs">
-                        <label class="text-gray-400 font-semibold flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            Throw Speed (u)
-                        </label>
-                        <span class="font-mono text-emerald-300 font-bold" id="action-speed-readout">u = 30 m/s</span>
-                    </div>
-                    <input type="range" id="slider-action" min="-60" max="60" value="30" class="w-full" oninput="updateSliders()">
-                    <div class="flex justify-between text-[9px] text-gray-500 font-mono">
-                        <span>-60 (Backward)</span>
-                        <span>60 (Forward)</span>
-                    </div>
+                <!-- Mode Specific Toggles (Injected by JS) -->
+                <div id="mode-specific-controls" class="border-t border-slate-700 pt-4 flex flex-col gap-3">
+                    <!-- Dynamic content -->
                 </div>
 
-                <!-- Toggle Toggles -->
-                <div class="grid grid-cols-2 gap-3 border-t border-gray-800 pt-4 text-xs">
-                    <label class="flex items-center gap-2 cursor-pointer group">
-                        <input type="checkbox" id="chk-vectors" class="rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-0 focus:ring-offset-0" checked onchange="appState.showVectors = this.checked; draw()">
-                        <span class="text-gray-400 group-hover:text-white transition-colors">Vector Arrows</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer group">
-                        <input type="checkbox" id="chk-trails" class="rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-0 focus:ring-offset-0" checked onchange="appState.showTrails = this.checked; draw()">
-                        <span class="text-gray-400 group-hover:text-white transition-colors">Motion Trails</span>
-                    </label>
-                </div>
             </div>
 
-            <!-- Dashboard Measurements/Live Readings -->
-            <div class="glass-panel rounded-xl p-5 border-t-2 border-emerald-500">
-                <div class="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i>
-                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Live Instrument Array</h3>
-                    </div>
-                    <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">LIVE</span>
-                </div>
-
-                <!-- Instruments Grid -->
-                <div class="grid grid-cols-2 gap-3">
-                    <!-- Instrument 1: Relative to Vehicle -->
-                    <div class="p-3 bg-gray-950/40 border border-gray-800/80 rounded-xl">
-                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">Relative to Vehicle</span>
-                        <div class="font-mono text-base font-extrabold text-white" id="readout-rel-vehicle">
-                            30.00 m/s
-                        </div>
-                    </div>
-
-                    <!-- Instrument 2: Relative to Ground -->
-                    <div class="p-3 bg-gray-950/40 border border-gray-800/80 rounded-xl">
-                        <span class="text-[10px] text-gray-400 font-semibold block mb-1">Relative to Ground</span>
-                        <div class="font-mono text-base font-extrabold text-white" id="readout-rel-ground">
-                            70.00 m/s
-                        </div>
-                    </div>
-
-                    <!-- Instrument 3: Wave Property A -->
-                    <div class="p-3 bg-gray-950/40 border border-gray-800/80 rounded-xl">
-                        <span class="text-[10px] text-gray-400 font-semibold block mb-1" id="readout-label-propA">Wavelength</span>
-                        <div class="font-mono text-sm font-extrabold text-white" id="readout-propA">
-                            N/A
-                        </div>
-                    </div>
-
-                    <!-- Instrument 4: Wave Property B -->
-                    <div class="p-3 bg-gray-950/40 border border-gray-800/80 rounded-xl">
-                        <span class="text-[10px] text-gray-400 font-semibold block mb-1" id="readout-label-propB">Frequency</span>
-                        <div class="font-mono text-sm font-extrabold text-white" id="readout-propB">
-                            N/A
-                        </div>
-                    </div>
-
-                    <!-- Full width stats (System Clocks) -->
-                    <div class="col-span-2 p-3 bg-gray-950/40 border border-gray-800/80 rounded-xl flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] text-gray-400 font-semibold block">System Elapsed Time</span>
-                            <div class="font-mono text-sm font-extrabold text-white" id="readout-time">
-                                t = 1.45s
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-[10px] text-gray-400 font-semibold block">Clock Rate Ratio</span>
-                            <div class="font-mono text-xs font-bold text-indigo-400" id="readout-gamma">
-                                γ = 1.00 (No Dilation)
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Takeaway Box -->
+            <div class="panel rounded-xl p-5 border-t-2 border-emerald-500 bg-emerald-900/10">
+                <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i data-lucide="lightbulb" class="w-4 h-4"></i> Key Takeaway
+                </h3>
+                <p id="takeaway-text" class="text-sm text-slate-300">
+                    Velocities are strictly additive. Space and time are absolute and identical for both observers.
+                </p>
             </div>
 
         </div>
-
     </main>
 
-    <!-- Global App Javascript Setup -->
     <script>
-        // Highly compatible rounded rect drawing function
-        function drawRoundRect(c, x, y, w, h, r) {
-            if (w < 2 * r) r = w / 2;
-            if (h < 2 * r) r = h / 2;
-            c.beginPath();
-            c.moveTo(x + r, y);
-            c.arcTo(x + w, y, x + w, y + h, r);
-            c.arcTo(x + w, y + h, x, y + h, r);
-            c.arcTo(x, y + h, x, y, r);
-            c.arcTo(x, y, x + w, y, r);
-            c.closePath();
-        }
+        // Initialize Icons
+        lucide.createIcons();
 
-        // Setup state variables
-        let appState = {
-            mode: 'football', // football, sound, light
-            observer: 'ground', // fallback but dual frame displays both simultaneously now
-            isPlaying: true,
-            isSlowMo: false,
-            showVectors: true,
-            showTrails: true,
-            vehicleSpeed: 40, 
-            throwSpeed: 30, 
-            time: 0,
-            
-            // Seeding independent vehicle positions to simulate coordinates
-            truckX_ground: 100, // Tracks truck position in absolute ground canvas coordinates
-
-            // Light mode specific variables
-            lightClockMode: false,
-            lightClockTickCountPassenger: 0,
-            lightClockTickCountGround: 0,
-            lightPredictionMade: false,
-            lightClockHistoryGround: [], // Zigzag trajectory in Ground View
-            lightClockHistoryPassenger: [], // Straight vertical path trace in Passenger View
-            
-            // Sound mode specific
-            isFreezeWave: false,
-            soundFrequency: 1, 
-            airParticles: [], // Ambient particles showing wind vs static
-            
-            // Objects
-            football_ground: { x: 100, y: 150, thrown: false, vy: 0 },
-            football_passenger: { x: 100, y: 150, thrown: false, vy: 0 },
-            soundPulses: [],
-            lightPulses: [],
-            lightClockPulse_ground: { y: 0, vy: -1 },
-            lightClockPulse_passenger: { y: 0, vy: -1 }
-        };
+        // Canvas Setup
+        const cvsGround = document.getElementById('canvas-ground');
+        const ctxGround = cvsGround.getContext('2d');
+        const cvsPassenger = document.getElementById('canvas-passenger');
+        const ctxPassenger = cvsPassenger.getContext('2d');
 
         // Constants
-        const SOUND_SPEED_AIR = 120; 
-        const LIGHT_SPEED_C = 160;   
-        const GROUND_Y = 135; // Calibrated for smaller dual-row canvases
-        const LIGHT_CLOCK_H = 55;    
+        const C = 100; // Speed of light for simulation purposes
+        const V_SOUND = 60; // Speed of sound
+        const TRUCK_Y = 160;
+        const CLOCK_H = 80;
 
-        // Dual Canvas setups
-        let groundCanvas, groundCtx;
-        let passengerCanvas, passengerCtx;
-
-        window.onload = function() {
-            // Setup icons safely
-            try {
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-            } catch (e) {
-                console.warn("Lucide icons failed to load:", e);
-            }
-
-            // Bind canvases
-            groundCanvas = document.getElementById('groundCanvas');
-            groundCtx = groundCanvas.getContext('2d');
-            passengerCanvas = document.getElementById('passengerCanvas');
-            passengerCtx = passengerCanvas.getContext('2d');
+        // Simulation State
+        let state = {
+            mode: 'football', // football, sound, light
+            isPlaying: true,
+            time: 0,
+            truckX: 50,
+            truckV: 50,
+            throwV: 30,
             
-            // Safely resize
-            resizeCanvas();
-
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                draw();
-            });
-
-            // Set up ambient air dust/particles
-            for (let i = 0; i < 40; i++) {
-                appState.airParticles.push({
-                    x: Math.random() * 800,
-                    y: Math.random() * GROUND_Y,
-                    speedFactor: 0.4 + Math.random() * 0.6
-                });
-            }
-
-            // Initialize app configs
-            setMode('football');
+            // Mode Specific
+            football: { xG: 50, xP: 0, y: TRUCK_Y - 20, vy: 0, active: false, tEmit: 0 },
+            pulses: [], // For sound/light spherical waves
             
-            // Launch simulation loop
-            animate();
+            // Light Clock Mode
+            showLightClock: false,
+            clockPulseG: { x: 50, y: TRUCK_Y - 20, vy: -1, ticks: 0, history: [] },
+            clockPulseP: { x: 0, y: TRUCK_Y - 20, vy: -1, ticks: 0, history: [] }
         };
 
-        function resizeCanvas() {
+        // Resize Handling
+        function resize() {
+            const rect = cvsGround.parentElement.getBoundingClientRect();
+            const w = rect.width;
+            const h = 220; // Fixed visual height
+
+            // Handle high DPI displays
             const dpr = window.devicePixelRatio || 1;
             
-            [groundCanvas, passengerCanvas].forEach(canvas => {
-                if (!canvas) return;
-                const rect = canvas.getBoundingClientRect();
-                const width = rect.width || canvas.clientWidth || 800;
-                const height = rect.height || canvas.clientHeight || 180;
-                
-                canvas.width = width * dpr;
-                canvas.height = height * dpr;
-                canvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0); 
+            [cvsGround, cvsPassenger].forEach(cvs => {
+                cvs.width = w * dpr;
+                cvs.height = h * dpr;
+                cvs.style.width = `${w}px`;
+                cvs.style.height = `${h}px`;
+                const ctx = cvs.getContext('2d');
+                ctx.scale(dpr, dpr);
             });
         }
+        window.addEventListener('resize', resize);
 
-        function updatePlayPauseButtonUI() {
-            const playIcon = document.getElementById('play-icon');
-            const playText = document.getElementById('play-text');
-            if (playIcon && playText) {
-                if (appState.isPlaying) {
-                    playIcon.setAttribute('data-lucide', 'pause');
-                    playText.innerText = "Pause Sim";
-                } else {
-                    playIcon.setAttribute('data-lucide', 'play');
-                    playText.innerText = "Resume Sim";
-                }
-            }
-            try {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) {}
-        }
-
-        function setMode(newMode) {
-            appState.mode = newMode;
-            
-            // Active button highlight styles
-            ['football', 'sound', 'light'].forEach(m => {
-                const btn = document.getElementById(`btn-mode-${m}`);
-                if (btn) {
-                    if (m === newMode) {
-                        btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-md shadow-indigo-500/10";
-                    } else {
-                        btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-gray-400 hover:text-white";
-                    }
-                }
-            });
-
-            // Clean state histories
-            appState.time = 0;
-            appState.posHistory = [];
-            appState.velHistory = [];
-            appState.soundPulses = [];
-            appState.lightPulses = [];
-            appState.lightClockHistoryGround = [];
-            appState.lightClockHistoryPassenger = [];
-            appState.lightClockTickCountPassenger = 0;
-            appState.lightClockTickCountGround = 0;
-            appState.truckX_ground = 120;
-            appState.isFreezeWave = false;
-
-            // Reset prediction gate logic if transitioning to Light Speed
-            if (newMode === 'light' && !appState.lightPredictionMade) {
-                appState.isPlaying = false; // Auto-pause for the prediction paradox!
-                updatePlayPauseButtonUI();
-                showPredictionGate();
-            } else {
-                hidePredictionGate();
+        function updateParams() {
+            state.truckV = parseFloat(document.getElementById('slider-truck').value);
+            const throwSlider = document.getElementById('slider-throw');
+            if (throwSlider) {
+                state.throwV = parseFloat(throwSlider.value);
             }
 
-            // Adapt specific controls & layout
-            configureControls();
-            configureExplanations();
-            resetFootball();
-
-            // Refresh DOM Elements
-            draw();
-        }
-
-        function configureControls() {
-            const vehicleSlider = document.getElementById('slider-vehicle');
-            const actionSlider = document.getElementById('slider-action');
-            const actionBox = document.getElementById('slider-action-box');
-            const actionLabel = document.getElementById('slider-action-label');
-            const vehicleLabel = document.getElementById('slider-vehicle-label');
-            const specificContainer = document.getElementById('mode-specific-buttons');
-
-            if (!specificContainer) return;
-            specificContainer.innerHTML = ''; // Clear custom controls
-
-            // Reset Slider defaults based on chosen physics mode
-            if (appState.mode === 'football') {
-                if (actionBox) actionBox.classList.remove('hidden');
-                if (vehicleSlider) {
-                    vehicleSlider.min = "0";
-                    vehicleSlider.max = "100";
-                    vehicleSlider.value = "40";
-                }
-                if (actionSlider) {
-                    actionSlider.min = "-60";
-                    actionSlider.max = "60";
-                    actionSlider.value = "30";
-                }
-                if (vehicleLabel) vehicleLabel.innerText = "Vehicle Speed (v)";
-                if (actionLabel) actionLabel.innerText = "Throw Speed (u)";
-                
-                const maxLabel = document.getElementById('slider-vehicle-max-label');
-                if (maxLabel) maxLabel.innerText = "100 m/s";
-            } 
-            else if (appState.mode === 'sound') {
-                if (actionBox) actionBox.classList.add('hidden'); 
-                if (vehicleSlider) {
-                    vehicleSlider.min = "0";
-                    vehicleSlider.max = "100"; 
-                    vehicleSlider.value = "45";
-                }
-                if (vehicleLabel) vehicleLabel.innerText = "Vehicle Speed (v)";
-                
-                const maxLabel = document.getElementById('slider-vehicle-max-label');
-                if (maxLabel) maxLabel.innerText = "100 m/s (Sound Speed = 120 m/s)";
-
-                specificContainer.innerHTML = `
-                    <button id="btn-freeze-sound" class="w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/20 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all" onclick="toggleFreezeWave()">
-                        <i data-lucide="snowflake" class="w-4 h-4"></i>
-                        <span id="txt-freeze-wave">Freeze Wavefronts</span>
-                    </button>
-                `;
-            } 
-            else if (appState.mode === 'light') {
-                if (actionBox) actionBox.classList.add('hidden');
-                if (vehicleSlider) {
-                    vehicleSlider.min = "0";
-                    vehicleSlider.max = "130"; 
-                    vehicleSlider.value = "80";
-                }
-                if (vehicleLabel) vehicleLabel.innerText = "Vehicle Speed (v)";
-                
-                const maxLabel = document.getElementById('slider-vehicle-max-label');
-                if (maxLabel) maxLabel.innerText = "130 m/s (c = 160 m/s)";
-
-                specificContainer.innerHTML = `
-                    <button id="btn-toggle-lightclock" class="w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/20 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all" onclick="toggleLightClockMode()">
-                        <i data-lucide="clock" class="w-4 h-4"></i>
-                        <span id="txt-light-clock">Activate Light Clock Mode</span>
-                    </button>
-                `;
-            }
-
-            updateSliders();
-            try {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) {}
-        }
-
-        function configureExplanations() {
-            const badge = document.getElementById('explainer-badge');
-            const text = document.getElementById('explainer-text');
-            const cTitle = document.getElementById('challenge-title');
-            const cDesc = document.getElementById('challenge-desc');
-
-            if (!badge || !text) return;
-
-            if (appState.mode === 'football') {
-                badge.innerText = "Classical Mechanics";
-                badge.className = "px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20";
-                text.innerText = "Notice how the football inherits the truck's speed on the top screen (Speed adds up) but flies normally from the stationary passenger's screen.";
-                if (cTitle) cTitle.innerText = "Regime 1: Galileo's Playground (Classical Addition)";
-                if (cDesc) cDesc.innerText = "Observe the speed bars. To the Ground Observer, the speed is u + v. To the Passenger, it is just u.";
-            } else if (appState.mode === 'sound') {
-                badge.innerText = "Wave Dynamics";
-                badge.className = "px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20";
-                text.innerText = "On the top screen, waves expand from where they were emitted (air is stationary). On the bottom screen, a relative wind sweeps waves backward.";
-                if (cTitle) cTitle.innerText = "Regime 2: Wave Mechanics & The Doppler Effect";
-                if (cDesc) cDesc.innerText = "Notice that the waves bunch up in front. The propagation speed of sound through the air medium remains constant.";
-            } else if (appState.mode === 'light') {
-                badge.innerText = "Special Relativity";
-                badge.className = "px-2 py-0.5 rounded-full text-[10px] font-mono bg-violet-500/10 text-violet-400 border border-violet-500/20";
-                text.innerText = "This is the ultimate paradox. On both screens, the light expands in perfect concentric circles around the observer. Space and time distort to make this possible.";
-                if (cTitle) cTitle.innerText = "Regime 3: Einstein's Core Revelation (Constancy of Light)";
-                if (cDesc) cDesc.innerText = "Notice the truck's shape and cabin ruler contract (Length Contraction), and passenger time dilates to reconcile the speed bars.";
-            }
-        }
-
-        function updateSliders() {
-            const vehicleSlider = document.getElementById('slider-vehicle');
-            const actionSlider = document.getElementById('slider-action');
-            
-            if (vehicleSlider) appState.vehicleSpeed = parseFloat(vehicleSlider.value) || 0;
-            if (actionSlider) appState.throwSpeed = parseFloat(actionSlider.value) || 0;
-
-            // Set screen labels safely
-            const vehicleReadout = document.getElementById('vehicle-speed-readout');
-            const actionReadout = document.getElementById('action-speed-readout');
-            if (vehicleReadout) vehicleReadout.innerText = `v = ${appState.vehicleSpeed.toFixed(0)} m/s`;
-            if (actionReadout) actionReadout.innerText = `u = ${appState.throwSpeed.toFixed(0)} m/s`;
-            
-            resetFootball();
-            draw();
+            document.getElementById('val-truck').innerText = `${state.truckV} m/s`;
+            if(throwSlider) document.getElementById('val-throw').innerText = `${state.throwV} m/s`;
         }
 
         function togglePlay() {
-            appState.isPlaying = !appState.isPlaying;
-            updatePlayPauseButtonUI();
-        }
-
-        function toggleSlowMo() {
-            appState.isSlowMo = !appState.isSlowMo;
-            const slowText = document.getElementById('slowmo-text');
-            if (slowText) {
-                if (appState.isSlowMo) {
-                    slowText.innerText = "Normal Mo (1x)";
-                } else {
-                    slowText.innerText = "Slow Mo (0.2x)";
-                }
-            }
-        }
-
-        function toggleFreezeWave() {
-            appState.isFreezeWave = !appState.isFreezeWave;
-            const btn = document.getElementById('btn-freeze-sound');
-            const txt = document.getElementById('txt-freeze-wave');
-            const indicator = document.getElementById('freeze-indicator');
+            state.isPlaying = !state.isPlaying;
+            const icon = document.getElementById('icon-play');
+            const txt = document.getElementById('text-play');
             
-            if (btn && txt && indicator) {
-                if (appState.isFreezeWave) {
-                    btn.className = "w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold border border-amber-500/40 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all";
-                    txt.innerText = "Resume Wavefronts";
-                    indicator.style.opacity = "1";
-                } else {
-                    btn.className = "w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/20 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all";
-                    txt.innerText = "Freeze Wavefronts";
-                    indicator.style.opacity = "0";
-                }
+            if (state.isPlaying) {
+                icon.setAttribute('data-lucide', 'pause');
+                txt.innerText = 'Pause';
+            } else {
+                icon.setAttribute('data-lucide', 'play');
+                txt.innerText = 'Resume';
             }
-        }
-
-        function toggleLightClockMode() {
-            appState.lightClockMode = !appState.lightClockMode;
-            const btn = document.getElementById('btn-toggle-lightclock');
-            const txt = document.getElementById('txt-light-clock');
-            
-            appState.lightClockTickCountPassenger = 0;
-            appState.lightClockTickCountGround = 0;
-            appState.lightClockHistoryGround = [];
-            appState.lightClockHistoryPassenger = [];
-            
-            appState.lightClockPulse_ground = { passengerY: GROUND_Y - 45, vy: -1 };
-            appState.lightClockPulse_passenger = { passengerY: GROUND_Y - 45, vy: -1 };
-
-            if (btn && txt) {
-                if (appState.lightClockMode) {
-                    btn.className = "w-full py-2 bg-violet-600/30 text-violet-300 font-semibold border border-violet-500/50 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all";
-                    txt.innerText = "Exit Light Clock Mode";
-                } else {
-                    btn.className = "w-full py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/20 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all";
-                    txt.innerText = "Activate Light Clock Mode";
-                }
-            }
+            lucide.createIcons();
         }
 
         function resetSim() {
-            appState.time = 0;
-            appState.soundPulses = [];
-            appState.lightPulses = [];
-            appState.lightClockHistoryGround = [];
-            appState.lightClockHistoryPassenger = [];
-            appState.lightClockTickCountPassenger = 0;
-            appState.lightClockTickCountGround = 0;
-            appState.truckX_ground = 120;
-            appState.isFreezeWave = false;
-            resetFootball();
-            draw();
-        }
-
-        function resetFootball() {
-            const w = groundCanvas ? groundCanvas.width / window.devicePixelRatio : 800;
-            appState.football_ground.thrown = false;
-            appState.football_ground.x = appState.truckX_ground;
-            appState.football_ground.y = GROUND_Y - 45;
-            appState.football_ground.vy = -12;
-
-            appState.football_passenger.thrown = false;
-            appState.football_passenger.x = w / 2;
-            appState.football_passenger.y = GROUND_Y - 45;
-            appState.football_passenger.vy = -12;
-        }
-
-        function setObserver(obs) {
-            // Deprecated: Frame selection is now displayed simultaneously side-by-side!
-            // Handled for compatibility.
-        }
-
-        // --- PREDICTION GATE CONTROLS ---
-        function showPredictionGate() {
-            const gate = document.getElementById('prediction-gate');
-            const qTitle = document.getElementById('prediction-question');
-            const optionsBox = document.getElementById('prediction-options');
+            state.time = 0;
+            state.truckX = 50;
+            state.football.active = false;
+            state.pulses = [];
             
-            if (!gate || !qTitle || !optionsBox) return;
-            gate.classList.remove('hidden');
-
-            qTitle.innerText = "The Paradox of the Constancy of Light";
-            optionsBox.innerHTML = `
-                <button class="w-full text-left p-4 bg-gray-800 hover:bg-indigo-950/50 border border-gray-700 hover:border-indigo-500/50 rounded-xl text-xs transition-all text-gray-200 flex justify-between items-center" onclick="handlePredictionAnswer('normal')">
-                    <span>A) <strong>Passenger measures a slower speed</strong>. Since the truck is chasing the pulse, the light should appear to pull away from the bumper at a reduced speed.</span>
-                    <i data-lucide="arrow-right-circle" class="w-4 h-4 text-indigo-400 shrink-0 ml-3"></i>
-                </button>
-                <button class="w-full text-left p-4 bg-gray-800 hover:bg-violet-950/50 border border-gray-700 hover:border-violet-500/50 rounded-xl text-xs transition-all text-gray-200 flex justify-between items-center" onclick="handlePredictionAnswer('einstein')">
-                    <span>B) <strong>Both measure exactly c</strong>. Space (Length Contraction) and Time (Time Dilation) distort for the passenger to preserve this constant.</span>
-                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0 ml-3"></i>
-                </button>
-            `;
-            try {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) {}
+            // Reset clocks
+            state.clockPulseG = { x: state.truckX, y: TRUCK_Y - 20, vy: -1, ticks: 0, history: [] };
+            state.clockPulseP = { x: cvsPassenger.width / (window.devicePixelRatio||1) / 2, y: TRUCK_Y - 20, vy: -1, ticks: 0, history: [] };
         }
 
-        function hidePredictionGate() {
-            const gate = document.getElementById('prediction-gate');
-            if (gate) gate.classList.add('hidden');
-        }
+        function setMode(mode) {
+            state.mode = mode;
+            resetSim();
 
-        function handlePredictionAnswer(answer) {
-            appState.lightPredictionMade = true;
-            hidePredictionGate();
-            
-            appState.isPlaying = true;
-            updatePlayPauseButtonUI();
+            // UI Tab Styling
+            ['football', 'sound', 'light'].forEach(m => {
+                const btn = document.getElementById(`tab-${m}`);
+                if (m === mode) {
+                    btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-white bg-indigo-600 shadow-lg shadow-indigo-900/50";
+                } else {
+                    btn.className = "flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+                }
+            });
 
-            const mainBanner = document.getElementById('challenge-banner');
-            if (!mainBanner) return;
-            mainBanner.className = "glass-panel rounded-xl p-4 flex items-start gap-3 border-l-4 border-l-amber-500 transition-all";
-            
-            if (answer === 'einstein') {
-                mainBanner.innerHTML = `
-                    <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
-                        <i data-lucide="thumbs-up" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-emerald-400">Perfect Conceptual Realization!</h3>
-                        <p class="text-xs text-gray-300 mt-0.5">Yes! To the Ground observer, the truck nearly catches up. To the Passenger, length contracts and time slows down, so they measure the escaping light beam at full speed c!</p>
+            // Adjust controls and text
+            const title = document.getElementById('lesson-title');
+            const desc = document.getElementById('lesson-desc');
+            const takeaway = document.getElementById('takeaway-text');
+            const sliderTruck = document.getElementById('slider-truck');
+            const projControl = document.getElementById('control-projectile');
+            const customControls = document.getElementById('mode-specific-controls');
+
+            if (mode === 'football') {
+                title.innerText = "Part 1: Galilean Relativity (Classical)";
+                desc.innerText = "Observe how velocities add together. When the passenger throws a ball, its speed relative to the ground is the truck's speed PLUS the throw speed.";
+                takeaway.innerText = "Speeds simply add up (V_ground = V_truck + V_throw). Space and Time are identical for both observers.";
+                
+                projControl.style.display = 'block';
+                customControls.innerHTML = '';
+                sliderTruck.max = 95;
+                sliderTruck.value = 50;
+                document.getElementById('slider-throw').value = 30;
+
+            } else if (mode === 'sound') {
+                title.innerText = "Part 2: The Aether / Medium (Sound Waves)";
+                desc.innerText = "Sound waves travel through a medium (air). The speed of the wave is constant relative to the AIR, not the source. Notice the Doppler shift.";
+                takeaway.innerText = "Waves bunch up in the direction of motion. If you travel fast enough, you can catch up to or outrun your own sound waves (Sonic Boom).";
+                
+                projControl.style.display = 'none';
+                customControls.innerHTML = `
+                    <div class="text-xs text-slate-400 bg-slate-800 p-3 rounded-lg border border-slate-700">
+                        <i data-lucide="info" class="w-4 h-4 inline mb-0.5 text-cyan-400"></i> 
+                        The blue grid represents the air medium. Notice it is stationary on top, but rushes backward from the passenger's perspective.
                     </div>
                 `;
-            } else {
-                mainBanner.innerHTML = `
-                    <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
-                        <i data-lucide="zap" class="w-5 h-5 animate-bounce"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-amber-400">Let's Resolve the Mystery:</h3>
-                        <p class="text-xs text-gray-300 mt-0.5">Observe the split-screen carefully: On top (Ground), the truck chases the light shell. On the bottom (Passenger), light expands perfectly symmetric around the cabin! This is special relativity in action.</p>
+                sliderTruck.max = 90; // Allows supersonic (V_SOUND = 60)
+                sliderTruck.value = 40;
+
+            } else if (mode === 'light') {
+                title.innerText = "Part 3: Special Relativity (Light)";
+                desc.innerText = "Light speed (c) is constant for EVERY observer, regardless of their motion. To make this possible, Space contracts and Time slows down for the moving frame.";
+                takeaway.innerText = "The Light Clock proves Time Dilation: Because light must travel a longer diagonal path in the Ground Frame at the same speed c, the ground observer sees the moving clock tick SLOWER.";
+                
+                projControl.style.display = 'none';
+                customControls.innerHTML = `
+                    <button class="w-full py-2 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 font-semibold border border-purple-500/50 rounded-lg text-sm flex items-center justify-center gap-2 transition-all" onclick="state.showLightClock = !state.showLightClock; resetSim();">
+                        <i data-lucide="clock" class="w-4 h-4"></i> Toggle Light Clock Example
+                    </button>
+                    <div class="text-xs text-slate-400 bg-slate-800 p-3 rounded-lg border border-slate-700 mt-2">
+                        <i data-lucide="zap" class="w-4 h-4 inline mb-0.5 text-purple-400"></i> 
+                        Speed of Light (c) = ${C} m/s in this sim. Try setting truck speed high!
                     </div>
                 `;
+                sliderTruck.max = 99; // Cap just under c
+                sliderTruck.value = 80;
             }
-            try {
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            } catch(e) {}
-        }
 
-        // --- SIMULATION PHYSICS ENGINE ---
-        function animate() {
-            if (appState.isPlaying) {
-                let dt = appState.isSlowMo ? 0.05 : 0.25;
-                updatePhysics(dt);
-            }
-            draw();
-            animationFrameId = requestAnimationFrame(animate);
+            updateParams();
+            lucide.createIcons();
         }
 
         function updatePhysics(dt) {
-            if (!groundCanvas) return;
-            appState.time += dt * 0.1; 
-            const w = groundCanvas.width / window.devicePixelRatio;
+            state.time += dt;
+            const w = cvsGround.clientWidth || 800;
+            const pW = w / 2; // passenger fixed X
 
-            // 1. Progress truck coordinate in the Ground view
-            appState.truckX_ground += appState.vehicleSpeed * dt * 0.25;
-            if (appState.truckX_ground > w + 100) {
-                appState.truckX_ground = -80;
-                resetFootball();
-                appState.soundPulses = [];
-                appState.lightPulses = [];
-                appState.lightClockHistoryGround = [];
-                appState.lightClockHistoryPassenger = [];
+            // 1. Truck Position (Ground Frame)
+            state.truckX += state.truckV * dt;
+            if (state.truckX > w + 100) {
+                state.truckX = -50;
+                resetSim(); // loop
             }
 
-            // Move Sound dust particles
-            if (appState.mode === 'sound' && !appState.isFreezeWave) {
-                appState.airParticles.forEach(p => {
-                    // Top frame (Ground): Dust stays stationary (or drifts in wind if needed)
-                    // Bottom frame (Passenger): Dust rushes past representing the relative wind
-                    p.x -= appState.vehicleSpeed * dt * 0.25;
-                    if (p.x < 0) p.x = w;
-                });
-            }
-
-            // 2. Football Trajectories
-            if (appState.mode === 'football') {
-                // Ground view trajectory (inherited vehicle + throw speed)
-                if (!appState.football_ground.thrown) {
-                    appState.football_ground.x = appState.truckX_ground;
-                    appState.football_ground.y = GROUND_Y - 45;
-                    if (Math.random() < 0.03 && appState.isPlaying) {
-                        appState.football_ground.thrown = true;
-                        appState.football_ground.vy = -12;
-                    }
-                } else {
-                    appState.football_ground.x += (appState.vehicleSpeed + appState.throwSpeed) * dt * 0.25;
-                    appState.football_ground.y += appState.football_ground.vy * dt * 0.25;
-                    appState.football_ground.vy += 0.8 * dt; // gravity
-                    if (appState.football_ground.y >= GROUND_Y) {
-                        appState.football_ground.thrown = false;
-                    }
+            // 2. Football Physics
+            if (state.mode === 'football') {
+                if (!state.football.active && Math.random() < 0.02) {
+                    state.football.active = true;
+                    state.football.xG = state.truckX;
+                    state.football.xP = pW;
+                    state.football.y = TRUCK_Y - 20;
+                    state.football.vy = -60;
                 }
 
-                // Passenger view trajectory (only throw speed relative to stationary truck)
-                if (!appState.football_passenger.thrown) {
-                    appState.football_passenger.x = w / 2;
-                    appState.football_passenger.y = GROUND_Y - 45;
-                    if (appState.football_ground.thrown) { // sync throw triggers
-                        appState.football_passenger.thrown = true;
-                        appState.football_passenger.vy = -12;
-                    }
-                } else {
-                    appState.football_passenger.x += appState.throwSpeed * dt * 0.25;
-                    appState.football_passenger.y += appState.football_passenger.vy * dt * 0.25;
-                    appState.football_passenger.vy += 0.8 * dt;
-                    if (appState.football_passenger.y >= GROUND_Y) {
-                        appState.football_passenger.thrown = false;
+                if (state.football.active) {
+                    // Ground frame: inherits truck speed + throw speed
+                    state.football.xG += (state.truckV + state.throwV) * dt;
+                    // Passenger frame: only throw speed
+                    state.football.xP += state.throwV * dt;
+                    
+                    state.football.y += state.football.vy * dt;
+                    state.football.vy += 150 * dt; // gravity
+
+                    if (state.football.y > TRUCK_Y) {
+                        state.football.active = false;
                     }
                 }
             }
 
-            // 3. Sound Wave propagation
-            if (appState.mode === 'sound' && !appState.isFreezeWave) {
-                const lastSound = appState.soundPulses[appState.soundPulses.length - 1];
-                if (!lastSound || appState.time - lastSound.tEmit > 0.45) {
-                    appState.soundPulses.push({
-                        centerX_ground: appState.truckX_ground,
+            // 3. Sound / Light Wave Pulses
+            if ((state.mode === 'sound' || (state.mode === 'light' && !state.showLightClock))) {
+                const emitRate = state.mode === 'sound' ? 0.8 : 0.6;
+                const waveSpeed = state.mode === 'sound' ? V_SOUND : C;
+
+                // Emit new pulse
+                if (state.pulses.length === 0 || state.time - state.pulses[state.pulses.length - 1].tEmit > emitRate) {
+                    state.pulses.push({
+                        xEmitG: state.truckX,
                         radius: 0,
-                        tEmit: appState.time
+                        tEmit: state.time
                     });
                 }
-                appState.soundPulses.forEach(pulse => {
-                    pulse.radius += SOUND_SPEED_AIR * dt * 0.25;
+
+                // Expand pulses
+                state.pulses.forEach(p => {
+                    p.radius += waveSpeed * dt;
                 });
-                appState.soundPulses = appState.soundPulses.filter(p => p.radius <= w * 1.5);
+                state.pulses = state.pulses.filter(p => p.radius < w * 1.2);
             }
 
-            // 4. Light Wave & Light Clock propagation
-            if (appState.mode === 'light') {
-                if (appState.lightClockMode) {
-                    const speedOfLight = 12;
-                    const beta = appState.vehicleSpeed / LIGHT_SPEED_C;
-                    const gamma = 1 / Math.sqrt(1 - beta * beta || 0.0001);
+            // 4. Light Clock Physics (The core of Time Dilation)
+            if (state.mode === 'light' && state.showLightClock) {
+                // Calculate gamma
+                const beta = state.truckV / C;
+                const gamma = 1 / Math.sqrt(1 - beta * beta);
 
-                    // A. Passenger Frame Clock: Straight vertical bounce
-                    appState.lightClockPulse_passenger.passengerY += appState.lightClockPulse_passenger.vy * speedOfLight * dt * 0.1;
-                    
-                    appState.lightClockHistoryPassenger.push({
-                        x: w / 2,
-                        y: appState.lightClockPulse_passenger.passengerY
-                    });
-                    if (appState.lightClockHistoryPassenger.length > 200) appState.lightClockHistoryPassenger.shift();
+                // --- PASSENGER FRAME CLOCK (Stationary) ---
+                // Light moves purely vertical at speed c
+                state.clockPulseP.x = pW; 
+                state.clockPulseP.y += state.clockPulseP.vy * C * dt;
+                
+                state.clockPulseP.history.push({x: state.clockPulseP.x, y: state.clockPulseP.y});
+                if (state.clockPulseP.history.length > 50) state.clockPulseP.history.shift();
 
-                    if (appState.lightClockPulse_passenger.passengerY <= GROUND_Y - LIGHT_CLOCK_H - 45) {
-                        appState.lightClockPulse_passenger.vy = 1;
-                        appState.lightClockTickCountPassenger += 0.5;
-                    }
-                    if (appState.lightClockPulse_passenger.passengerY >= GROUND_Y - 45) {
-                        appState.lightClockPulse_passenger.vy = -1;
-                        appState.lightClockTickCountPassenger += 0.5;
-                    }
+                if (state.clockPulseP.y <= TRUCK_Y - 20 - CLOCK_H) {
+                    state.clockPulseP.vy = 1;
+                    state.clockPulseP.ticks++;
+                } else if (state.clockPulseP.y >= TRUCK_Y - 20) {
+                    state.clockPulseP.vy = -1;
+                    state.clockPulseP.ticks++;
+                }
 
-                    // B. Ground Frame Clock: Diagonal zigzag bounce (DILATED time)
-                    appState.lightClockPulse_ground.passengerY += appState.lightClockPulse_ground.vy * speedOfLight * (dt / gamma) * 0.1;
-                    
-                    appState.lightClockHistoryGround.push({
-                        x: appState.truckX_ground,
-                        y: appState.lightClockPulse_ground.passengerY
-                    });
-                    if (appState.lightClockHistoryGround.length > 200) appState.lightClockHistoryGround.shift();
+                // --- GROUND FRAME CLOCK (Moving) ---
+                // Light must have horizontal speed V_truck to stay with the truck.
+                // Total speed must be c. Therefore, vertical speed is sqrt(c^2 - v^2).
+                const vyGround = Math.sqrt(C*C - state.truckV*state.truckV);
+                
+                state.clockPulseG.x = state.truckX;
+                state.clockPulseG.y += state.clockPulseG.vy * vyGround * dt;
+                
+                state.clockPulseG.history.push({x: state.clockPulseG.x, y: state.clockPulseG.y});
+                if (state.clockPulseG.history.length > 200) state.clockPulseG.history.shift(); // Keep longer trace
 
-                    if (appState.lightClockPulse_ground.passengerY <= GROUND_Y - LIGHT_CLOCK_H - 45) {
-                        appState.lightClockPulse_ground.vy = 1;
-                        appState.lightClockTickCountGround += 0.5;
-                    }
-                    if (appState.lightClockPulse_ground.passengerY >= GROUND_Y - 45) {
-                        appState.lightClockPulse_ground.vy = -1;
-                        appState.lightClockTickCountGround += 0.5;
-                    }
-
-                } else {
-                    // Regular light emission
-                    const lastLight = appState.lightPulses[appState.lightPulses.length - 1];
-                    if (!lastLight || appState.time - lastLight.tEmit > 1.0) {
-                        appState.lightPulses.push({
-                            centerX_emit_ground: appState.truckX_ground,
-                            radius: 0,
-                            tEmit: appState.time
-                        });
-                    }
-                    appState.lightPulses.forEach(pulse => {
-                        pulse.radius += LIGHT_SPEED_C * dt * 0.25;
-                    });
-                    appState.lightPulses = appState.lightPulses.filter(p => p.radius <= w * 1.5);
+                if (state.clockPulseG.y <= TRUCK_Y - 20 - CLOCK_H) {
+                    state.clockPulseG.vy = 1;
+                    state.clockPulseG.ticks++;
+                } else if (state.clockPulseG.y >= TRUCK_Y - 20) {
+                    state.clockPulseG.vy = -1;
+                    state.clockPulseG.ticks++;
                 }
             }
         }
 
-        // --- RENDER SCREEN SCHEMES ---
-        function draw() {
-            if (!groundCanvas || !passengerCanvas) return;
-            const w = groundCanvas.width / window.devicePixelRatio;
-            const h = groundCanvas.height / window.devicePixelRatio;
+        function drawGrid(ctx, w, h, offsetX, isMedium = false) {
+            ctx.strokeStyle = isMedium ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            const gridSize = 40;
+            const shift = offsetX % gridSize;
 
-            // Clear canvases
-            groundCtx.clearRect(0, 0, w, h);
-            passengerCtx.clearRect(0, 0, w, h);
-
-            // Setup basic landscape
-            drawSceneBackground(groundCtx, w, h, 'ground');
-            drawSceneBackground(passengerCtx, w, h, 'passenger');
-
-            // Draw content based on current mode
-            if (appState.mode === 'football') {
-                drawFootballMode(w, h);
-            } else if (appState.mode === 'sound') {
-                drawSoundMode(w, h);
-            } else if (appState.mode === 'light') {
-                drawLightMode(w, h);
-            }
-
-            updateInstrumentReadings();
-        }
-
-        function drawSceneBackground(ctx, w, h, observer) {
-            // Draw dark backdrop
-            ctx.fillStyle = '#05070c';
-            ctx.fillRect(0, 0, w, h);
-
-            // Draw horizontal ground line
-            ctx.strokeStyle = '#1e293b';
-            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(0, GROUND_Y);
-            ctx.lineTo(w, GROUND_Y);
+            // Vertical lines
+            for (let x = shift - gridSize; x < w + gridSize; x += gridSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+            }
+            // Horizontal lines
+            for (let y = 0; y < h; y += gridSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+            }
             ctx.stroke();
 
-            // Ground base color
-            ctx.fillStyle = '#090d16';
-            ctx.fillRect(0, GROUND_Y, w, h - GROUND_Y);
-
-            // Draw decorative trees
-            let offset = 0;
-            if (observer === 'passenger') {
-                // Trees drift backward relative to passenger
-                offset = -(appState.truckX_ground) % 180;
-            } else {
-                offset = 0;
-            }
-
-            ctx.fillStyle = '#065f46';
-            for (let x = offset - 60; x < w + 60; x += 180) {
-                // Tree profile
-                ctx.beginPath();
-                ctx.moveTo(x, GROUND_Y);
-                ctx.lineTo(x - 8, GROUND_Y - 15);
-                ctx.lineTo(x + 8, GROUND_Y - 15);
-                ctx.fill();
-
-                // trunk
-                ctx.fillStyle = '#78350f';
-                ctx.fillRect(x - 1, GROUND_Y - 3, 2, 3);
-                ctx.fillStyle = '#065f46';
-            }
-
-            // Draw Ground Observer (Stationary on Ground View, drifting in Passenger view)
-            let obsX = 120;
-            if (observer === 'passenger') {
-                obsX = 120 - (appState.truckX_ground - w / 2);
-            }
-            
-            // Draw red stick figure observer
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath();
-            ctx.arc(obsX, GROUND_Y - 18, 4, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = '#ef4444';
+            // Ground Line
+            ctx.strokeStyle = '#475569';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(obsX, GROUND_Y - 14);
-            ctx.lineTo(obsX, GROUND_Y - 4);
+            ctx.moveTo(0, TRUCK_Y);
+            ctx.lineTo(w, TRUCK_Y);
+            ctx.stroke();
+            
+            // Fill dirt
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, TRUCK_Y, w, h - TRUCK_Y);
+        }
+
+        function drawTruck(ctx, x, applyContraction = false) {
+            let scaleX = 1.0;
+            if (applyContraction && state.mode === 'light') {
+                const beta = state.truckV / C;
+                const gamma = 1 / Math.sqrt(1 - beta*beta);
+                scaleX = 1 / gamma; // Length Contraction!
+            }
+
+            ctx.save();
+            ctx.translate(x, TRUCK_Y);
+            ctx.scale(scaleX, 1);
+
+            // Body
+            ctx.fillStyle = '#1e1b4b';
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-40, -30, 80, 24, 4);
+            ctx.fill();
             ctx.stroke();
 
-            ctx.fillStyle = '#f87171';
-            ctx.font = 'bold 8px monospace';
-            ctx.fillText("Ground Obs", obsX - 22, GROUND_Y + 10);
-        }
-
-        function drawFootballMode(w, h) {
-            // A. TOP CANVAS: Ground frame
-            drawVehicleBody(groundCtx, appState.truckX_ground, 'ground');
-            const ballX_ground = appState.football_ground.x;
-            const ballY_ground = appState.football_ground.y;
-
-            groundCtx.fillStyle = '#f59e0b';
-            groundCtx.beginPath();
-            groundCtx.arc(ballX_ground, ballY_ground, 4, 0, Math.PI * 2);
-            groundCtx.fill();
-
-            if (appState.showVectors) {
-                drawVector(groundCtx, appState.truckX_ground, GROUND_Y - 20, appState.vehicleSpeed, 0, '#4f46e5', 'v');
-                drawVector(groundCtx, ballX_ground, ballY_ground - 10, appState.throwSpeed, 0, '#10b981', 'u');
-                if (appState.football_ground.thrown) {
-                    drawVector(groundCtx, ballX_ground, ballY_ground + 10, appState.vehicleSpeed + appState.throwSpeed, 0, '#f59e0b', 'v + u');
-                }
-            }
-
-            // B. BOTTOM CANVAS: Passenger frame (centered)
-            const centerTruckX = w / 2;
-            drawVehicleBody(passengerCtx, centerTruckX, 'passenger');
-            const ballX_passenger = appState.football_passenger.x;
-            const ballY_passenger = appState.football_passenger.y;
-
-            passengerCtx.fillStyle = '#f59e0b';
-            passengerCtx.beginPath();
-            passengerCtx.arc(ballX_passenger, ballY_passenger, 4, 0, Math.PI * 2);
-            passengerCtx.fill();
-
-            if (appState.showVectors) {
-                drawVector(passengerCtx, centerTruckX, GROUND_Y - 20, 0, 0, '#4f46e5', 'v=0 (Stationary)');
-                drawVector(passengerCtx, ballX_passenger, ballY_passenger - 10, appState.throwSpeed, 0, '#10b981', 'u');
-            }
-        }
-
-        function drawSoundMode(w, h) {
-            // A. TOP CANVAS: Ground Frame (Medium is absolute static)
-            appState.soundPulses.forEach(pulse => {
-                groundCtx.strokeStyle = `rgba(59, 130, 246, ${Math.max(0, 1 - pulse.radius / (w * 0.8))})`;
-                groundCtx.lineWidth = 1.5;
-                groundCtx.beginPath();
-                // Sound expands symmetrically around the point of emission relative to ground
-                groundCtx.arc(pulse.centerX_ground, GROUND_Y - 20, pulse.radius, 0, Math.PI * 2);
-                groundCtx.stroke();
-            });
-            drawVehicleBody(groundCtx, appState.truckX_ground, 'ground');
-
-            // B. BOTTOM CANVAS: Passenger Frame (Wind sweeps waves backwards)
-            // Draw drifting air dust
-            passengerCtx.fillStyle = 'rgba(59, 130, 246, 0.2)';
-            appState.airParticles.forEach(p => {
-                passengerCtx.beginPath();
-                passengerCtx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-                passengerCtx.fill();
-            });
-
-            const centerTruckX = w / 2;
-            appState.soundPulses.forEach(pulse => {
-                passengerCtx.strokeStyle = `rgba(59, 130, 246, ${Math.max(0, 1 - pulse.radius / (w * 0.8))})`;
-                passengerCtx.lineWidth = 1.5;
-                passengerCtx.beginPath();
-                // Wave centers are physically blown backward relative to stationary truck
-                const relativeCenterX = pulse.centerX_ground - (appState.truckX_ground - centerTruckX);
-                passengerCtx.arc(relativeCenterX, GROUND_Y - 20, pulse.radius, 0, Math.PI * 2);
-                passengerCtx.stroke();
-            });
-            drawVehicleBody(passengerCtx, centerTruckX, 'passenger');
-
-            // Draw sweeping wind arrow
-            passengerCtx.fillStyle = '#ef4444';
-            passengerCtx.font = '8px monospace';
-            passengerCtx.fillText("← Relative Wind Speed: -" + appState.vehicleSpeed + " m/s", w - 180, 20);
-        }
-
-        function drawLightMode(w, h) {
-            const beta = appState.vehicleSpeed / LIGHT_SPEED_C;
-            const gamma = 1 / Math.sqrt(1 - beta * beta || 0.0001);
-
-            if (appState.lightClockMode) {
-                // A. TOP CANVAS: Ground Clock (Diagonal longer path, contracted vehicle)
-                const vX = appState.truckX_ground;
-                drawLightClockChamber(groundCtx, vX, 'ground');
-
-                // Draw zigzag historical trace
-                if (appState.lightClockHistoryGround.length > 1) {
-                    groundCtx.strokeStyle = 'rgba(236, 72, 153, 0.6)';
-                    groundCtx.lineWidth = 1.5;
-                    groundCtx.beginPath();
-                    appState.lightClockHistoryGround.forEach((pt, i) => {
-                        if (i === 0) groundCtx.moveTo(pt.x, pt.y);
-                        else groundCtx.lineTo(pt.x, pt.y);
-                    });
-                    groundCtx.stroke();
-                }
-
-                // Draw pulsing light particle
-                const pulseY_g = appState.lightClockPulse_ground.passengerY;
-                groundCtx.fillStyle = '#ff007f';
-                groundCtx.beginPath();
-                groundCtx.arc(vX, pulseY_g, 4.5, 0, Math.PI * 2);
-                groundCtx.fill();
-
-                drawVehicleBody(groundCtx, vX, 'ground', true); // scale with contraction!
-
-                // B. BOTTOM CANVAS: Passenger Clock (Straight vertical short path, stationary)
-                const centerTruckX = w / 2;
-                drawLightClockChamber(passengerCtx, centerTruckX, 'passenger');
-
-                if (appState.lightClockHistoryPassenger.length > 1) {
-                    passengerCtx.strokeStyle = 'rgba(34, 211, 238, 0.6)';
-                    passengerCtx.lineWidth = 1.5;
-                    passengerCtx.beginPath();
-                    appState.lightClockHistoryPassenger.forEach((pt, i) => {
-                        if (i === 0) passengerCtx.moveTo(pt.x, pt.y);
-                        else passengerCtx.lineTo(pt.x, pt.y);
-                    });
-                    passengerCtx.stroke();
-                }
-
-                const pulseY_p = appState.lightClockPulse_passenger.passengerY;
-                passengerCtx.fillStyle = '#06b6d4';
-                passengerCtx.beginPath();
-                passengerCtx.arc(centerTruckX, pulseY_p, 4.5, 0, Math.PI * 2);
-                passengerCtx.fill();
-
-                drawVehicleBody(passengerCtx, centerTruckX, 'passenger');
-
-            } else {
-                // --- STANDARD LIGHT CONCENTRIC SPHERES ---
-                
-                // A. TOP CANVAS: Ground frame (Concentric circles expand around absolute points of emission)
-                appState.lightPulses.forEach(pulse => {
-                    groundCtx.strokeStyle = `rgba(168, 85, 247, ${Math.max(0, 1 - pulse.radius / (w * 0.8))})`;
-                    groundCtx.lineWidth = 1.5;
-                    groundCtx.beginPath();
-                    groundCtx.arc(pulse.centerX_emit_ground, GROUND_Y - 20, pulse.radius, 0, Math.PI * 2);
-                    groundCtx.stroke();
-                });
-                // Draw vehicle body contracted by gamma!
-                drawVehicleBody(groundCtx, appState.truckX_ground, 'ground', true);
-
-                // B. BOTTOM CANVAS: Passenger frame (Concentric circles expand symmetrically around the truck)
-                const centerTruckX = w / 2;
-                appState.lightPulses.forEach(pulse => {
-                    passengerCtx.strokeStyle = `rgba(168, 85, 247, ${Math.max(0, 1 - pulse.radius / (w * 0.8))})`;
-                    passengerCtx.lineWidth = 1.5;
-                    passengerCtx.beginPath();
-                    // Relativistic magic: Light expands exactly centered on the moving passenger!
-                    passengerCtx.arc(centerTruckX, GROUND_Y - 20, pulse.radius, 0, Math.PI * 2);
-                    passengerCtx.stroke();
-                });
-                drawVehicleBody(passengerCtx, centerTruckX, 'passenger');
-            }
-        }
-
-        function drawVehicleBody(c, x, observer, applyContraction = false) {
-            let widthScale = 1.0;
-            if (applyContraction && appState.mode === 'light') {
-                const beta = appState.vehicleSpeed / LIGHT_SPEED_C;
-                const gamma = 1 / Math.sqrt(1 - beta * beta || 0.0001);
-                widthScale = 1 / gamma; // Contract the cabin length!
-            }
-
-            c.save();
-            c.translate(x, 0);
-            c.scale(widthScale, 1.0); // Apply relativistic length contraction to the truck!
-
-            c.fillStyle = '#1e1b4b'; 
-            c.strokeStyle = '#4f46e5';
-            c.lineWidth = 1.5;
-
-            // Truck Body
-            drawRoundRect(c, -35, GROUND_Y - 32, 70, 24, 4);
-            c.fill();
-            c.stroke();
-
-            // Windshield
-            c.fillStyle = '#38bdf8';
-            drawRoundRect(c, 18, GROUND_Y - 28, 12, 12, 2);
-            c.fill();
+            // Cabin / Window
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.roundRect(15, -26, 15, 12, 2);
+            ctx.fill();
 
             // Wheels
-            c.fillStyle = '#0f172a';
-            c.strokeStyle = '#334155';
-            c.lineWidth = 1.5;
-            c.beginPath();
-            c.arc(-20, GROUND_Y - 8, 6, 0, Math.PI * 2);
-            c.arc(18, GROUND_Y - 8, 6, 0, Math.PI * 2);
-            c.fill();
-            c.stroke();
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(-20, -6, 6, 0, Math.PI*2);
+            ctx.arc(20, -6, 6, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
 
-            // Passenger silhouette
-            c.fillStyle = '#10b981'; 
-            c.beginPath();
-            c.arc(22, GROUND_Y - 20, 2.5, 0, Math.PI * 2);
-            c.fill();
+            ctx.restore();
 
-            c.restore();
-
-            // Rulers/Tick marks attached below to visually show contracted spatial grids
-            if (applyContraction && appState.mode === 'light' && appState.showVectors) {
-                c.strokeStyle = '#a855f7';
-                c.lineWidth = 1;
-                c.beginPath();
-                c.moveTo(x - 35 * widthScale, GROUND_Y - 40);
-                c.lineTo(x + 35 * widthScale, GROUND_Y - 40);
-                c.stroke();
+            // Draw Light clock mirrors if active
+            if (state.mode === 'light' && state.showLightClock) {
+                ctx.save();
+                ctx.translate(x, TRUCK_Y);
+                // Clock is attached to truck, so horizontal dimensions contract too!
+                ctx.scale(scaleX, 1); 
                 
-                c.fillStyle = '#d8b4fe';
-                c.font = '9px monospace';
-                c.fillText(`Length: ${(70 * widthScale).toFixed(0)}m (Contracted)`, x - 50, GROUND_Y - 45);
+                ctx.fillStyle = '#cbd5e1';
+                // Bottom mirror
+                ctx.fillRect(-15, -22, 30, 4);
+                // Top mirror
+                ctx.fillRect(-15, -20 - CLOCK_H, 30, 4);
+                
+                // connecting rods
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(-12, -22); ctx.lineTo(-12, -20 - CLOCK_H);
+                ctx.moveTo(12, -22);  ctx.lineTo(12, -20 - CLOCK_H);
+                ctx.stroke();
+
+                ctx.restore();
             }
         }
 
-        function drawLightClockChamber(c, x, observer) {
-            c.strokeStyle = '#8b5cf6';
-            c.lineWidth = 2.5;
-            
-            // Top mirror
-            c.fillStyle = '#4c1d95';
-            drawRoundRect(c, x - 20, GROUND_Y - LIGHT_CLOCK_H - 45, 40, 5, 2);
-            c.fill();
-            c.stroke();
+        function draw() {
+            const w = cvsGround.clientWidth || 800;
+            const h = cvsGround.clientHeight || 200;
+            const pW = w / 2;
 
-            // Bottom mirror
-            drawRoundRect(c, x - 20, GROUND_Y - 45, 40, 5, 2);
-            c.fill();
-            c.stroke();
-        }
+            // Clear Canvases
+            ctxGround.clearRect(0, 0, w, h);
+            ctxPassenger.clearRect(0, 0, w, h);
 
-        function drawVector(c, startX, startY, lenX, lenY, color, label) {
-            if (lenX === 0 && lenY === 0) return;
-            c.strokeStyle = color;
-            c.fillStyle = color;
-            c.lineWidth = 2;
+            // --- DRAW GROUND FRAME (TOP) ---
+            // Grid is stationary.
+            drawGrid(ctxGround, w, h, 0, state.mode==='sound');
+            drawTruck(ctxGround, state.truckX, true); // Contracted in light mode
 
-            const endX = startX + lenX * 0.8;
-            const endY = startY + lenY * 0.8;
+            // --- DRAW PASSENGER FRAME (BOTTOM) ---
+            // Truck is stationary, Grid moves backward.
+            drawGrid(ctxPassenger, w, h, -state.truckX, state.mode==='sound');
+            drawTruck(ctxPassenger, pW, false); // Rest frame = proper length
 
-            c.beginPath();
-            c.moveTo(startX, startY);
-            c.lineTo(endX, endY);
-            c.stroke();
+            // --- MODE SPECIFIC GRAPHICS ---
+            if (state.mode === 'football') {
+                if (state.football.active) {
+                    // Ground Ball
+                    ctxGround.fillStyle = '#f59e0b';
+                    ctxGround.beginPath();
+                    ctxGround.arc(state.football.xG, state.football.y, 4, 0, Math.PI*2);
+                    ctxGround.fill();
 
-            const angle = Math.atan2(endY - startY, endX - startX);
-            c.beginPath();
-            c.moveTo(endX, endY);
-            c.lineTo(endX - 6 * Math.cos(angle - Math.PI / 6), endY - 6 * Math.sin(angle - Math.PI / 6));
-            c.lineTo(endX - 6 * Math.cos(angle + Math.PI / 6), endY - 6 * Math.sin(angle + Math.PI / 6));
-            c.fill();
-
-            c.font = 'bold 9px monospace';
-            c.fillText(label, startX + (endX - startX)/2 - 10, startY - 6);
-        }
-
-        function updateInstrumentReadings() {
-            const relVehicle = document.getElementById('readout-rel-vehicle');
-            const relGround = document.getElementById('readout-rel-ground');
-            const labelPropA = document.getElementById('readout-label-propA');
-            const labelPropB = document.getElementById('readout-label-propB');
-            const propA = document.getElementById('readout-propA');
-            const propB = document.getElementById('readout-propB');
-            const readoutTime = document.getElementById('readout-time');
-            const readoutGamma = document.getElementById('readout-gamma');
-
-            const barPassenger = document.getElementById('bar-passenger-speed');
-            const barGround = document.getElementById('bar-ground-speed');
-            const barPassengerLabel = document.getElementById('bar-passenger-label');
-            const barGroundLabel = document.getElementById('bar-ground-label');
-
-            if (readoutTime) readoutTime.innerText = `t = ${appState.time.toFixed(2)}s`;
-
-            const matFootball = document.getElementById('matrix-football');
-            const matSound = document.getElementById('matrix-sound');
-            const matLight = document.getElementById('matrix-light');
-
-            if (matFootball) matFootball.className = "p-3 bg-gray-950/50 rounded-xl border border-gray-800 transition-all duration-300";
-            if (matSound) matSound.className = "p-3 bg-gray-950/50 rounded-xl border border-gray-800 transition-all duration-300";
-            if (matLight) matLight.className = "p-3 bg-gray-950/50 rounded-xl border border-gray-800 transition-all duration-300";
-
-            if (appState.mode === 'football') {
-                if (matFootball) matFootball.className = "p-3 rounded-xl border transition-all duration-300 glass-panel-active";
-                
-                const relativeToTruck = appState.throwSpeed;
-                const relativeToGround = appState.throwSpeed + appState.vehicleSpeed;
-
-                if (relVehicle) relVehicle.innerHTML = `${relativeToTruck.toFixed(1)} m/s`;
-                if (relGround) relGround.innerHTML = `${relativeToGround.toFixed(1)} m/s`;
-
-                if (labelPropA) labelPropA.innerText = "Calculated Equation";
-                if (propA) propA.innerHTML = `u + v = ${(relativeToGround).toFixed(0)} m/s`;
-
-                if (labelPropB) labelPropB.innerText = "Relativity Mode";
-                if (propB) propB.innerText = "Classical Galilean";
-
-                if (readoutGamma) readoutGamma.innerText = "γ = 1.00 (No Dilation)";
-
-                const pctP = Math.max(0, (relativeToTruck / 200) * 100);
-                const pctG = Math.max(0, (relativeToGround / 200) * 100);
-                if (barPassenger) barPassenger.style.width = `${pctP}%`;
-                if (barGround) barGround.style.width = `${pctG}%`;
-                if (barPassengerLabel) barPassengerLabel.innerText = `${relativeToTruck.toFixed(1)} m/s`;
-                if (barGroundLabel) barGroundLabel.innerText = `${relativeToGround.toFixed(1)} m/s`;
-            } 
-            else if (appState.mode === 'sound') {
-                if (matSound) matSound.className = "p-3 rounded-xl border transition-all duration-300 glass-panel-active";
-                
-                const vSoundGround = SOUND_SPEED_AIR;
-                const vSoundPassenger = SOUND_SPEED_AIR - appState.vehicleSpeed;
-
-                if (relVehicle) relVehicle.innerHTML = `${vSoundPassenger.toFixed(1)} m/s`;
-                if (relGround) relGround.innerHTML = `${vSoundGround.toFixed(1)} m/s`;
-
-                const speedDiff = SOUND_SPEED_AIR - appState.vehicleSpeed;
-                if (labelPropA) labelPropA.innerText = "Front Wavelength (λ)";
-                if (labelPropB) labelPropB.innerText = "Observed Freq (f)";
-
-                if (propA && propB) {
-                    if (speedDiff > 0) {
-                        const lambdaFront = (speedDiff / 10).toFixed(2);
-                        propA.innerHTML = `${lambdaFront} meters`;
-                        
-                        const observedFreq = (SOUND_SPEED_AIR / speedDiff).toFixed(2);
-                        propB.innerHTML = `${observedFreq} Hz`;
-                    } else if (speedDiff === 0) {
-                        propA.innerHTML = `0.00 m (Sonic Barrier)`;
-                        propB.innerHTML = `∞ Hz`;
-                    } else {
-                        propA.innerHTML = `Inverted (Doppler Shock)`;
-                        propB.innerHTML = `Supersonic`;
-                    }
+                    // Passenger Ball
+                    ctxPassenger.fillStyle = '#f59e0b';
+                    ctxPassenger.beginPath();
+                    ctxPassenger.arc(state.football.xP, state.football.y, 4, 0, Math.PI*2);
+                    ctxPassenger.fill();
                 }
 
-                if (readoutGamma) readoutGamma.innerText = `Mach ratio = ${(appState.vehicleSpeed / SOUND_SPEED_AIR).toFixed(2)}`;
-
-                const pctP = Math.max(0, (vSoundPassenger / 200) * 100);
-                const pctG = Math.max(0, (vSoundGround / 200) * 100);
-                if (barPassenger) barPassenger.style.width = `${pctP}%`;
-                if (barGround) barGround.style.width = `${pctG}%`;
-                if (barPassengerLabel) barPassengerLabel.innerText = `${vSoundPassenger.toFixed(1)} m/s`;
-                if (barGroundLabel) barGroundLabel.innerText = `${vSoundGround.toFixed(1)} m/s`;
+                // Metrics Update
+                document.getElementById('ground-metrics').innerHTML = `
+                    <div class="text-emerald-400">Truck Speed: ${state.truckV.toFixed(1)} m/s</div>
+                    <div class="text-amber-400">Ball Speed: ${(state.truckV + state.throwV).toFixed(1)} m/s</div>
+                `;
+                document.getElementById('passenger-metrics').innerHTML = `
+                    <div class="text-cyan-400">Truck Speed: 0.0 m/s</div>
+                    <div class="text-amber-400">Ball Speed: ${state.throwV.toFixed(1)} m/s</div>
+                `;
             } 
-            else if (appState.mode === 'light') {
-                if (matLight) matLight.className = "p-3 rounded-xl border transition-all duration-300 glass-panel-active";
-                
-                if (relVehicle) relVehicle.innerHTML = `160.00 m/s (c)`;
-                if (relGround) relGround.innerHTML = `160.00 m/s (c)`;
+            
+            else if (state.mode === 'sound') {
+                state.pulses.forEach(p => {
+                    // Ground: Medium is stationary, circles expand from emit points
+                    ctxGround.strokeStyle = `rgba(56, 189, 248, ${Math.max(0, 1 - p.radius/(w*0.6))})`;
+                    ctxGround.lineWidth = 1.5;
+                    ctxGround.beginPath();
+                    ctxGround.arc(p.xEmitG, TRUCK_Y - 20, p.radius, 0, Math.PI*2);
+                    ctxGround.stroke();
 
-                const beta = appState.vehicleSpeed / LIGHT_SPEED_C;
-                const gamma = 1 / Math.sqrt(1 - beta * beta || 0.0001);
+                    // Passenger: Medium moves backward, circles drift backward!
+                    // Distance ground has moved since emission:
+                    const drift = (state.time - p.tEmit) * state.truckV;
+                    ctxPassenger.strokeStyle = `rgba(56, 189, 248, ${Math.max(0, 1 - p.radius/(w*0.6))})`;
+                    ctxPassenger.lineWidth = 1.5;
+                    ctxPassenger.beginPath();
+                    ctxPassenger.arc(pW - drift, TRUCK_Y - 20, p.radius, 0, Math.PI*2);
+                    ctxPassenger.stroke();
+                });
 
-                if (labelPropA) labelPropA.innerText = "Time Dilation Factor (γ)";
-                if (propA) propA.innerHTML = `${gamma.toFixed(3)}x`;
+                document.getElementById('ground-metrics').innerHTML = `
+                    <div class="text-emerald-400">Wave Speed (fwd): ${V_SOUND} m/s</div>
+                `;
+                document.getElementById('passenger-metrics').innerHTML = `
+                    <div class="text-emerald-400">Wave Speed (fwd): ${(V_SOUND - state.truckV).toFixed(1)} m/s</div>
+                    <div class="text-slate-400 text-[10px]">Headwind: -${state.truckV} m/s</div>
+                `;
+            } 
+            
+            else if (state.mode === 'light') {
+                if (state.showLightClock) {
+                    // Draw Ground Trace
+                    if (state.clockPulseG.history.length > 1) {
+                        ctxGround.strokeStyle = 'rgba(217, 70, 239, 0.5)'; // Fuchsia
+                        ctxGround.lineWidth = 2;
+                        ctxGround.beginPath();
+                        ctxGround.moveTo(state.clockPulseG.history[0].x, state.clockPulseG.history[0].y);
+                        for(let i=1; i<state.clockPulseG.history.length; i++) {
+                            ctxGround.lineTo(state.clockPulseG.history[i].x, state.clockPulseG.history[i].y);
+                        }
+                        ctxGround.stroke();
+                    }
+                    // Pulse
+                    ctxGround.fillStyle = '#d946ef';
+                    ctxGround.beginPath();
+                    ctxGround.arc(state.clockPulseG.x, state.clockPulseG.y, 4, 0, Math.PI*2);
+                    ctxGround.fill();
 
-                if (labelPropB) labelPropB.innerText = "Light Clock Tick Gap";
-                if (propB) propB.innerHTML = `1.4s vs ${(1.4 * gamma).toFixed(1)}s`;
+                    // Draw Passenger Trace
+                    if (state.clockPulseP.history.length > 1) {
+                        ctxPassenger.strokeStyle = 'rgba(217, 70, 239, 0.5)';
+                        ctxPassenger.lineWidth = 2;
+                        ctxPassenger.beginPath();
+                        ctxPassenger.moveTo(state.clockPulseP.history[0].x, state.clockPulseP.history[0].y);
+                        for(let i=1; i<state.clockPulseP.history.length; i++) {
+                            ctxPassenger.lineTo(state.clockPulseP.history[i].x, state.clockPulseP.history[i].y);
+                        }
+                        ctxPassenger.stroke();
+                    }
+                    // Pulse
+                    ctxPassenger.fillStyle = '#d946ef';
+                    ctxPassenger.beginPath();
+                    ctxPassenger.arc(state.clockPulseP.x, state.clockPulseP.y, 4, 0, Math.PI*2);
+                    ctxPassenger.fill();
 
-                if (readoutGamma) readoutGamma.innerText = `γ = ${gamma.toFixed(3)} (Time Dilation)`;
+                    // Metrics
+                    const beta = state.truckV / C;
+                    const gamma = 1 / Math.sqrt(1 - beta * beta);
+                    document.getElementById('ground-metrics').innerHTML = `
+                        <div class="text-purple-400">Total Path Speed: ${C} m/s (c)</div>
+                        <div class="text-amber-400 text-sm mt-1">Ticks: ${Math.floor(state.clockPulseG.ticks/2)}</div>
+                    `;
+                    document.getElementById('passenger-metrics').innerHTML = `
+                        <div class="text-purple-400">Total Path Speed: ${C} m/s (c)</div>
+                        <div class="text-amber-400 text-sm mt-1">Ticks: ${Math.floor(state.clockPulseP.ticks/2)}</div>
+                    `;
+                    document.getElementById('takeaway-text').innerHTML = `
+                        <span class="text-amber-400">Look at the tick counts!</span> 
+                        The moving clock (top) has a longer diagonal path. Since light speed is constant, it takes longer to bounce. 
+                        <strong>Time Dilation factor ($\gamma$): ${gamma.toFixed(2)}x</strong>
+                    `;
 
-                const pctP = (LIGHT_SPEED_C / 200) * 100;
-                const pctG = (LIGHT_SPEED_C / 200) * 100;
-                if (barPassenger) barPassenger.style.width = `${pctP}%`;
-                if (barGround) barGround.style.width = `${pctG}%`;
-                if (barPassengerLabel) barPassengerLabel.innerText = `160.0 m/s (c)`;
-                if (barGroundLabel) barGroundLabel.innerText = `160.0 m/s (c)`;
+                } else {
+                    // Spherical Light Waves (Postulate 2)
+                    state.pulses.forEach(p => {
+                        // Ground: Expands from stationary emission point
+                        ctxGround.strokeStyle = `rgba(168, 85, 247, ${Math.max(0, 1 - p.radius/(w*0.6))})`;
+                        ctxGround.lineWidth = 1.5;
+                        ctxGround.beginPath();
+                        ctxGround.arc(p.xEmitG, TRUCK_Y - 20, p.radius, 0, Math.PI*2);
+                        ctxGround.stroke();
+
+                        // Passenger: Expands centered ON THE TRUCK. Light doesn't care about the source's speed.
+                        ctxPassenger.strokeStyle = `rgba(168, 85, 247, ${Math.max(0, 1 - p.radius/(w*0.6))})`;
+                        ctxPassenger.lineWidth = 1.5;
+                        ctxPassenger.beginPath();
+                        ctxPassenger.arc(pW, TRUCK_Y - 20, p.radius, 0, Math.PI*2);
+                        ctxPassenger.stroke();
+                    });
+
+                    document.getElementById('ground-metrics').innerHTML = `
+                        <div class="text-purple-400">Wave Speed (fwd): ${C} m/s (c)</div>
+                        <div class="text-slate-400 text-[10px]">Relative to Truck: ${C - state.truckV} m/s (Paradox!)</div>
+                    `;
+                    document.getElementById('passenger-metrics').innerHTML = `
+                        <div class="text-purple-400">Wave Speed (fwd): ${C} m/s (c)</div>
+                        <div class="text-slate-400 text-[10px]">Centered exactly on truck</div>
+                    `;
+                    document.getElementById('takeaway-text').innerHTML = `
+                        In the ground frame (top), the truck is chasing the light. 
+                        In the passenger frame (bottom), light expands perfectly symmetrically from the truck. 
+                        Both measure speed exactly $c$.
+                    `;
+                }
             }
+
+            document.getElementById('time-readout').innerText = `Universal Time: ${state.time.toFixed(2)}s`;
         }
+
+        // Animation Loop
+        let lastTime = 0;
+        function loop(timestamp) {
+            let dt = (timestamp - lastTime) / 1000;
+            if (dt > 0.1) dt = 0.1; // cap dt for tab switching
+            lastTime = timestamp;
+
+            if (state.isPlaying) {
+                updatePhysics(dt);
+            }
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Boot
+        window.onload = () => {
+            resize();
+            setMode('football');
+            requestAnimationFrame(loop);
+        };
     </script>
 </body>
 </html>
